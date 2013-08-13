@@ -2,40 +2,82 @@
 <meta charset="utf-8">
 <style>
 
+.counties {
+  fill: none;
+}
+
 .states {
   fill: none;
   stroke: #fff;
   stroke-linejoin: round;
 }
 
+.q0-11{fill:rgb(103,0,31)}
+ .q1-11{fill:rgb(178,24,43)}
+ .q2-11{fill:rgb(214,96,77)}
+.q3-11{fill:rgb(244,165,130)}
+ .q4-11{fill:rgb(253,219,199)}
+ .q5-11{fill:rgb(247,247,247)}
+ .q6-11{fill:rgb(209,229,240)}
+.q7-11{fill:rgb(146,197,222)}
+.q8-11{fill:rgb(67,147,195)}
+ .q9-11{fill:rgb(33,102,172)}
+.q10-11{fill:rgb(5,48,97)}
+
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
 <script src="http://d3js.org/topojson.v1.min.js"></script>
 <script>
 
 var width = 960,
     height = 500;
 
-var fill = d3.scale.log()
-    .domain([10, 500])
-    .range(["brown", "steelblue"]);
 
+var info={};
 var path = d3.geo.path();
-
+var select = d3.select("body").append("select");
 var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
-
-d3.json("json/us.json", function(error, us) {
+function dealData(data){
+	items = data.items;
+	items.forEach(function(v){
+		var out = {};
+		var name = v.name;
+		out.scale = d3.scale.quantile();
+		select.append('option').attr('value',name).html(name);
+		if(v.flip){
+			out.scale.range(d3.range(11).map(function(i) { return "q" + (10-i) + "-11"; }));
+		}else{
+			out.scale.range(d3.range(11).map(function(i) { return "q" + i + "-11"; }));
+		}
+		
+		out.scale.domain(v.data[1]);
+		out.vals = d3.map();
+		for(var idString in v.data[0]){
+			out.vals.set(parseInt(idString,10),v.data[0][idString]);
+		}
+		info[name]=out;
+	});
+}
+function updateValue(){
+	svg.selectAll('.county').attr("class", function(d) { return 'county '+info[select.property('value')].scale(info[select.property('value')].vals.get(d.id)); });
+}
+queue()
+.defer(d3.json, "json/us.json")
+.defer(d3.json,"json/data.json")
+.await( function(error, us,data) {
+	dealData(data);
   svg.append("g")
       .attr("class", "counties")
     .selectAll("path")
       .data(topojson.feature(us, us.objects.counties).features)
     .enter().append("path")
       .attr("d", path)
-      .style("fill", function(d) { return fill(path.area(d)); });
-
+      .attr("class", function(d) { return 'county '+info[select.property('value')].scale(info[select.property('value')].vals.get(d.id)); });
+select.on('change',updateValue);
   svg.append("path")
       .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a.id !== b.id; }))
       .attr("class", "states")
