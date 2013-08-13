@@ -1,109 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Census Data</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Census Data, Mapped">
-    <meta name="author" content="Calvin Metcalf et al">
-<link rel="stylesheet" href="leaflet/leaflet.css" />
-    <!-- Le styles -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <style>
-      body {
-       html, body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        width: 100%;
-        position: absolute;
-        overflow:hidden;
-      
-       }
-      #map {
-       margin-top: 50px;
-        width:100%;
-     height: 100%;
-     overflow:hidden;
-      }
-      .navbar-fixed-top{
-      	margin-bottom:0;
-      }
-      
-      @media (max-width: 780px) { 
-        .navbar .brand{
-        	margin-left:5px;
-        }
-        .btn.btn-info.cwm-collapsed{
-        	margin-bottom:40px;
-        }
-      }
-      	
-      </style>
-      <style>
-      ul.legend {
-      	list-style-type:none;
-      	margin-right:5px;
-      }
-      ul.legend span{
-      display: block;
-      float: left;
-      height: 16px;
-      width: 30px;
-      margin-right:5px;
-      margin-left: 0;
-       }
-    </style>
-<link rel="stylesheet" href="css/gh-fork-ribbon.css" />
+<meta charset="utf-8">
+<style>
 
-    <script src="js/shim-bundle.js"></script>
-	<!--[if IE]>
-	<link rel="stylesheet" href="leaflet/leaflet.ie.css" />
-	<link rel="stylesheet" href="css/gh-fork-ribbon.ie.css" />
-	<![endif]-->
-  </head>
+.states {
+  fill: none;
+  stroke: #fff;
+  stroke-linejoin: round;
+}
 
-  <body>
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script>
 
-        <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="navbar-inner">
-        <div class="container-fluid">
-          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="brand" href="http://data-otp.rhcloud.com/">Census Data</a>
-          <div class="nav-collapse collapse">
-            <ul class="nav">
-             <li></li><form class="navbar-form pull-left" id="searchForm"><select id="whichValue">
-  
-</select></form></li>
-            </ul>
-          </div><!--/.nav-collapse -->
-        </div>
-      </div>
-    </div>
- <div class="container-fluid" id='map'></div><div class="github-fork-ribbon-wrapper left-bottom">
-        <div class="github-fork-ribbon">
-            <a href="https://github.com/calvinmetcalf/CodeForBoston-Census">Fork me on GitHub</a>
-        </div></div><!-- /container -->
+var width = 960,
+    height = 500;
 
-    <!-- Le javascript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="js/communist.min.js"></script>
-    <script src="leaflet/leaflet.js"></script>
-    <script src="js/bundle.js"></script>
-    <script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+var fill = d3.scale.log()
+    .domain([10, 500])
+    .range(["brown", "steelblue"]);
 
-  ga('create', 'UA-40454900-2', 'calvinmetcalf.github.io');
-  ga('send', 'pageview');
+var path = d3.geo.path();
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+d3.json("json/us.json", function(error, us) {
+  svg.append("g")
+      .attr("class", "counties")
+    .selectAll("path")
+      .data(topojson.feature(us, us.objects.counties).features)
+    .enter().append("path")
+      .attr("d", path)
+      .style("fill", function(d) { return fill(path.area(d)); });
+
+  svg.append("path")
+      .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a.id !== b.id; }))
+      .attr("class", "states")
+      .attr("d", path);
+});
 
 </script>
-  </body>
-</html>
